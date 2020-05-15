@@ -20,83 +20,59 @@ export class Status extends TinyTypeOf<string>() {
     }
 }
 
-// DomainEvent
-class EventBus {
-    emit(event: string, context: any) {
-        console.log(`Event:`, event, context, context.toString())
+export class DomainId {
+    readonly #id!: Guid
+
+    constructor(id: Guid) {
+        this.#id = id
+    }
+
+    getId(): Guid {
+        return this.#id
     }
 }
 
-// Aggregate
-export class RichPackage {
 
-    #id!: Guid
+// Aggregate
+export class RichPackage extends DomainId {
     #type!: Type
     #variant!: Variant
     #size!: Size
-    #status!: Status
+    status!: Status
 
     #service: ExternalPackageSystem
-    #events: EventBus
 
-    private constructor(
-        service: ExternalPackageSystem = new ExternalPackageSystem(),
-        events: EventBus = new EventBus()
-    ) {
+    private constructor(id: Guid,
+                        private readonly service: ExternalPackageSystem = new ExternalPackageSystem()) {
+        super(id)
         this.#service = service
-        this.#events = events
     }
 
-    static register(type: Type,
-                    size: Size,
-                    variant: Variant) {
-        const pkg = new RichPackage()
-        // compose new object
+    static register(
+        id: Guid,
+        type: Type,
+        size: Size,
+        variant: Variant) {
+        const pkg = new RichPackage(id)
         pkg.#type = type
         pkg.#size = size
         pkg.#variant = variant
-        pkg.#status = new Status('before-submit')
+        pkg.status = new Status('before-submit')
 
         // validate
 
         // check funds
 
-        // execute
+        // submit
         pkg.#service.prepareOrder()
         pkg.#service.executeOrder()
-        pkg.#status = new Status('submitted')
-        // persist
-        pkg.#id = new Guid('aaaa-bbbb')
-        pkg.#events.emit(`Package created`, pkg)
-        return pkg
-    }
 
-    static load(
-        guuid: Guid
-    ): RichPackage {
-        const pkg = new RichPackage()
-        // from factory  repository - using guuid
-        pkg.#id = guuid
-        pkg.#type = new Type('some-type')
-        pkg.#size = new Size('small')
-        pkg.#variant = new Variant('box')
-        pkg.#status = new Status('in-progress')
+        pkg.status = new Status('submitted')
         return pkg
-    }
-
-    status(): Status {
-        if (this.#status.isFinished()) {
-            return this.#status
-        }
-        this.#status = new Status(this.#service.status())
-        if (this.#status.isFinished()) {
-           this.#events.emit('package delivery closed', this)
-        }
-        return this.#status
     }
 
     toString() {
-        return `Package(${this.#id.value}) [${this.#status}]`
+        return `Package(${this.getId().value}) [${this.status}]`
     }
 }
 
