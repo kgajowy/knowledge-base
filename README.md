@@ -40,9 +40,9 @@ echo 'You got to trust me on this, I saved the world'
 ```
 {% endcode %}
 
-{% api-method method="get" host="google.com" path="" %}
+{% api-method method="get" host="https://google.com" path="/v1/" %}
 {% api-method-summary %}
-
+Method title
 {% endapi-method-summary %}
 
 {% api-method-description %}
